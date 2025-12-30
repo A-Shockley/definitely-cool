@@ -1,0 +1,201 @@
+.plant-card {
+  background: white;
+  border-radius: 12px;
+  padding: 20px;
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+  transition: transform 0.2s, box-shadow 0.2s;
+  display: flex;
+  flex-direction: column;
+  gap: 15px;
+}
+
+.plant-card:hover {
+  transform: translateY(-4px);
+  box-shadow: 0 8px 16px rgba(0, 0, 0, 0.15);
+}
+
+.plant-card.needs-water {
+  border: 3px solid #f5576c;
+  box-shadow: 0 4px 12px rgba(245, 87, 108, 0.3);
+}
+
+.plant-card-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
+  gap: 15px;
+}
+
+.plant-info {
+  flex: 1;
+}
+
+.plant-info h3 {
+  color: #2d3748;
+  font-size: 1.5rem;
+  margin-bottom: 5px;
+}
+
+.plant-info .species {
+  color: #718096;
+  font-style: italic;
+  margin-bottom: 5px;
+}
+
+.plant-info .location {
+  color: #4a5568;
+  font-size: 0.9rem;
+}
+
+.plant-actions {
+  display: flex;
+  gap: 8px;
+}
+
+.btn-water {
+  background: linear-gradient(135deg, #4facfe 0%, #00f2fe 100%);
+  color: white;
+  border: none;
+  padding: 10px 16px;
+  border-radius: 8px;
+  font-size: 0.95rem;
+  font-weight: 600;
+  cursor: pointer;
+  transition: transform 0.2s, box-shadow 0.2s;
+  box-shadow: 0 2px 4px rgba(79, 172, 254, 0.3);
+  white-space: nowrap;
+}
+
+.btn-water:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 4px 8px rgba(79, 172, 254, 0.4);
+}
+
+.btn-water:active {
+  transform: translateY(0);
+}
+
+.watering-status {
+  padding: 12px;
+  border-radius: 8px;
+  text-align: center;
+  font-weight: 600;
+  font-size: 0.95rem;
+}
+
+.watering-status.overdue {
+  background: linear-gradient(135deg, #ff6b6b 0%, #ee5a6f 100%);
+  color: white;
+}
+
+.watering-status.today {
+  background: linear-gradient(135deg, #feca57 0%, #ff9ff3 100%);
+  color: #2d3748;
+}
+
+.watering-status.soon {
+  background: linear-gradient(135deg, #48dbfb 0%, #0abde3 100%);
+  color: white;
+}
+
+.watering-status.upcoming {
+  background: linear-gradient(135deg, #1dd1a1 0%, #10ac84 100%);
+  color: white;
+}
+
+.watering-status.no-schedule {
+  background: #e2e8f0;
+  color: #718096;
+}
+
+.plant-meta {
+  display: flex;
+  justify-content: space-between;
+  flex-wrap: wrap;
+  gap: 10px;
+  padding-top: 10px;
+  border-top: 1px solid #e2e8f0;
+  font-size: 0.85rem;
+  color: #718096;
+}
+
+.btn-toggle-details {
+  background: #f7fafc;
+  border: 1px solid #e2e8f0;
+  padding: 10px;
+  border-radius: 6px;
+  cursor: pointer;
+  font-size: 0.85rem;
+  font-weight: 500;
+  color: #4a5568;
+  transition: all 0.2s;
+  width: 100%;
+}
+
+.btn-toggle-details:hover {
+  background: #edf2f7;
+  border-color: #cbd5e0;
+}
+
+.plant-details {
+  padding-top: 10px;
+  border-top: 1px solid #e2e8f0;
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+.detail-section {
+  font-size: 0.9rem;
+}
+
+.detail-section strong {
+  display: block;
+  color: #2d3748;
+  margin-bottom: 4px;
+}
+
+.detail-section p {
+  color: #4a5568;
+  line-height: 1.5;
+  margin: 0;
+}
+
+.detail-actions {
+  display: flex;
+  gap: 10px;
+  margin-top: 10px;
+}
+
+.btn-edit,
+.btn-delete {
+  flex: 1;
+  padding: 10px 16px;
+  border: none;
+  border-radius: 6px;
+  font-size: 0.9rem;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.2s;
+}
+
+.btn-edit {
+  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+  color: white;
+}
+
+.btn-edit:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 4px 8px rgba(102, 126, 234, 0.3);
+}
+
+.btn-delete {
+  background: #fff5f5;
+  color: #e53e3e;
+  border: 2px solid #fc8181;
+}
+
+.btn-delete:hover {
+  background: #e53e3e;
+  color: white;
+}
