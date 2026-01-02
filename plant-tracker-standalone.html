@@ -1,0 +1,547 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>🌱 Plant Watering Tracker</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', 'Roboto', sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+            padding: 20px;
+        }
+
+        .app {
+            max-width: 1400px;
+            margin: 0 auto;
+        }
+
+        .app-header {
+            background: white;
+            border-radius: 16px;
+            padding: 30px;
+            margin-bottom: 20px;
+            box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            flex-wrap: wrap;
+            gap: 20px;
+        }
+
+        .app-header h1 {
+            font-size: 2.5rem;
+            color: #2d3748;
+        }
+
+        .app-header p {
+            color: #718096;
+            font-size: 1.1rem;
+        }
+
+        .btn-add-plant {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            border: none;
+            padding: 15px 30px;
+            font-size: 1.1rem;
+            font-weight: 600;
+            border-radius: 10px;
+            cursor: pointer;
+            box-shadow: 0 4px 6px rgba(102, 126, 234, 0.4);
+        }
+
+        .btn-add-plant:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 6px 12px rgba(102, 126, 234, 0.5);
+        }
+
+        .app-stats {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            gap: 20px;
+            margin-bottom: 20px;
+        }
+
+        .stat {
+            background: white;
+            border-radius: 12px;
+            padding: 25px;
+            text-align: center;
+            box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+        }
+
+        .stat.highlight {
+            background: linear-gradient(135deg, #f093fb 0%, #f5576c 100%);
+            color: white;
+        }
+
+        .stat-number {
+            display: block;
+            font-size: 3rem;
+            font-weight: bold;
+        }
+
+        .stat-label {
+            display: block;
+            font-size: 1rem;
+            color: #718096;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+            margin-top: 5px;
+        }
+
+        .stat.highlight .stat-label {
+            color: rgba(255, 255, 255, 0.9);
+        }
+
+        .controls {
+            background: white;
+            border-radius: 12px;
+            padding: 20px;
+            margin-bottom: 20px;
+        }
+
+        .search-box input {
+            width: 100%;
+            padding: 12px 20px;
+            font-size: 1rem;
+            border: 2px solid #e2e8f0;
+            border-radius: 8px;
+            margin-bottom: 15px;
+        }
+
+        .filter-buttons {
+            display: flex;
+            gap: 10px;
+            flex-wrap: wrap;
+        }
+
+        .filter-buttons button {
+            flex: 1;
+            min-width: 120px;
+            padding: 10px 20px;
+            border: 2px solid #e2e8f0;
+            background: white;
+            border-radius: 8px;
+            cursor: pointer;
+            font-weight: 500;
+        }
+
+        .filter-buttons button.active {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            border-color: #667eea;
+        }
+
+        .plant-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(320px, 1fr));
+            gap: 20px;
+            margin-bottom: 20px;
+        }
+
+        .plant-card {
+            background: white;
+            border-radius: 12px;
+            padding: 20px;
+            box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+        }
+
+        .plant-card.needs-water {
+            border: 3px solid #f5576c;
+        }
+
+        .plant-card h3 {
+            color: #2d3748;
+            font-size: 1.5rem;
+            margin-bottom: 10px;
+        }
+
+        .btn-water {
+            background: linear-gradient(135deg, #4facfe 0%, #00f2fe 100%);
+            color: white;
+            border: none;
+            padding: 10px 16px;
+            border-radius: 8px;
+            cursor: pointer;
+            font-weight: 600;
+            margin-top: 10px;
+        }
+
+        .watering-status {
+            padding: 12px;
+            border-radius: 8px;
+            text-align: center;
+            font-weight: 600;
+            margin: 10px 0;
+        }
+
+        .watering-status.overdue {
+            background: #ff6b6b;
+            color: white;
+        }
+
+        .watering-status.today {
+            background: #feca57;
+            color: #2d3748;
+        }
+
+        .watering-status.upcoming {
+            background: #1dd1a1;
+            color: white;
+        }
+
+        .watering-status.no-schedule {
+            background: #e2e8f0;
+            color: #718096;
+        }
+
+        .empty-state {
+            grid-column: 1 / -1;
+            text-align: center;
+            padding: 60px 20px;
+            background: white;
+            border-radius: 12px;
+        }
+
+        .modal {
+            display: none;
+            position: fixed;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background: rgba(0, 0, 0, 0.7);
+            justify-content: center;
+            align-items: center;
+            z-index: 1000;
+        }
+
+        .modal.show {
+            display: flex;
+        }
+
+        .modal-content {
+            background: white;
+            border-radius: 16px;
+            padding: 30px;
+            max-width: 600px;
+            width: 90%;
+            max-height: 90vh;
+            overflow-y: auto;
+        }
+
+        .modal-content h2 {
+            margin-bottom: 20px;
+        }
+
+        .form-group {
+            margin-bottom: 15px;
+        }
+
+        .form-group label {
+            display: block;
+            font-weight: 600;
+            margin-bottom: 5px;
+        }
+
+        .form-group input,
+        .form-group select,
+        .form-group textarea {
+            width: 100%;
+            padding: 10px;
+            border: 2px solid #e2e8f0;
+            border-radius: 8px;
+            font-family: inherit;
+        }
+
+        .form-actions {
+            display: flex;
+            gap: 10px;
+            margin-top: 20px;
+        }
+
+        .form-actions button {
+            flex: 1;
+            padding: 12px;
+            border-radius: 8px;
+            cursor: pointer;
+            font-weight: 600;
+            border: none;
+        }
+
+        .btn-cancel {
+            background: #f7fafc;
+            color: #4a5568;
+            border: 2px solid #e2e8f0;
+        }
+
+        .btn-save {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+        }
+
+        .btn-delete {
+            background: #e53e3e;
+            color: white;
+            padding: 8px 16px;
+            border: none;
+            border-radius: 6px;
+            cursor: pointer;
+            margin-top: 10px;
+        }
+    </style>
+</head>
+<body>
+    <div class="app">
+        <header class="app-header">
+            <div class="header-content">
+                <h1>🌱 Plant Watering Tracker</h1>
+                <p>Keep your plants happy and hydrated</p>
+            </div>
+            <button class="btn-add-plant" onclick="showAddPlantForm()">+ Add Plant</button>
+        </header>
+
+        <div class="app-stats">
+            <div class="stat">
+                <span class="stat-number" id="totalPlants">0</span>
+                <span class="stat-label">Total Plants</span>
+            </div>
+            <div class="stat highlight">
+                <span class="stat-number" id="needsWater">0</span>
+                <span class="stat-label">Need Water</span>
+            </div>
+        </div>
+
+        <div class="controls">
+            <div class="search-box">
+                <input type="text" id="searchInput" placeholder="🔍 Search plants..." oninput="filterPlants()">
+            </div>
+            <div class="filter-buttons">
+                <button class="active" onclick="setFilter('all')">All Plants</button>
+                <button onclick="setFilter('needs-water')">Needs Water</button>
+                <button onclick="setFilter('upcoming')">Scheduled</button>
+            </div>
+        </div>
+
+        <div class="plant-grid" id="plantGrid">
+            <div class="empty-state">
+                <h2>No plants yet!</h2>
+                <p>Click the "Add Plant" button to get started.</p>
+            </div>
+        </div>
+    </div>
+
+    <div class="modal" id="plantModal">
+        <div class="modal-content">
+            <h2 id="modalTitle">Add New Plant</h2>
+            <form id="plantForm" onsubmit="savePlant(event)">
+                <div class="form-group">
+                    <label>Plant Name *</label>
+                    <input type="text" id="plantName" required>
+                </div>
+                <div class="form-group">
+                    <label>Species</label>
+                    <input type="text" id="plantSpecies">
+                </div>
+                <div class="form-group">
+                    <label>Location</label>
+                    <input type="text" id="plantLocation">
+                </div>
+                <div class="form-group">
+                    <label>Watering Frequency (days)</label>
+                    <input type="number" id="plantFrequency" min="1">
+                </div>
+                <div class="form-group">
+                    <label>Light Requirement</label>
+                    <select id="plantLight">
+                        <option value="">Select...</option>
+                        <option value="Full sun">Full sun</option>
+                        <option value="Partial sun">Partial sun</option>
+                        <option value="Bright indirect">Bright indirect</option>
+                        <option value="Low light">Low light</option>
+                    </select>
+                </div>
+                <div class="form-group">
+                    <label>Notes</label>
+                    <textarea id="plantNotes" rows="3"></textarea>
+                </div>
+                <div class="form-actions">
+                    <button type="button" class="btn-cancel" onclick="closeModal()">Cancel</button>
+                    <button type="submit" class="btn-save">Save Plant</button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <script>
+        let plants = JSON.parse(localStorage.getItem('plants') || '[]');
+        let currentFilter = 'all';
+        let editingPlantId = null;
+
+        function savePlants() {
+            localStorage.setItem('plants', JSON.stringify(plants));
+        }
+
+        function showAddPlantForm() {
+            editingPlantId = null;
+            document.getElementById('modalTitle').textContent = 'Add New Plant';
+            document.getElementById('plantForm').reset();
+            document.getElementById('plantModal').classList.add('show');
+        }
+
+        function closeModal() {
+            document.getElementById('plantModal').classList.remove('show');
+        }
+
+        function savePlant(event) {
+            event.preventDefault();
+
+            const plant = {
+                id: editingPlantId || Date.now().toString(),
+                name: document.getElementById('plantName').value,
+                species: document.getElementById('plantSpecies').value,
+                location: document.getElementById('plantLocation').value,
+                wateringFrequency: parseInt(document.getElementById('plantFrequency').value) || null,
+                lightRequirement: document.getElementById('plantLight').value,
+                notes: document.getElementById('plantNotes').value,
+                lastWatered: null,
+                createdAt: new Date().toISOString()
+            };
+
+            if (editingPlantId) {
+                const index = plants.findIndex(p => p.id === editingPlantId);
+                if (index !== -1) {
+                    plant.lastWatered = plants[index].lastWatered;
+                    plants[index] = plant;
+                }
+            } else {
+                plants.push(plant);
+            }
+
+            savePlants();
+            closeModal();
+            renderPlants();
+        }
+
+        function waterPlant(id) {
+            const plant = plants.find(p => p.id === id);
+            if (plant) {
+                plant.lastWatered = new Date().toISOString();
+                savePlants();
+                renderPlants();
+            }
+        }
+
+        function deletePlant(id) {
+            if (confirm('Are you sure you want to delete this plant?')) {
+                plants = plants.filter(p => p.id !== id);
+                savePlants();
+                renderPlants();
+            }
+        }
+
+        function getDaysUntilWatering(plant) {
+            if (!plant.lastWatered || !plant.wateringFrequency) return null;
+
+            const lastWatered = new Date(plant.lastWatered);
+            const nextWatering = new Date(lastWatered);
+            nextWatering.setDate(nextWatering.getDate() + plant.wateringFrequency);
+
+            const today = new Date();
+            const diffTime = nextWatering - today;
+            const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24));
+
+            return diffDays;
+        }
+
+        function needsWatering(plant) {
+            const days = getDaysUntilWatering(plant);
+            return days !== null && days <= 0;
+        }
+
+        function getWateringStatus(plant) {
+            const days = getDaysUntilWatering(plant);
+            if (days === null) return { text: 'Not scheduled', class: 'no-schedule' };
+            if (days < 0) return { text: `Overdue by ${Math.abs(days)} days!`, class: 'overdue' };
+            if (days === 0) return { text: 'Water today!', class: 'today' };
+            return { text: `Water in ${days} days`, class: 'upcoming' };
+        }
+
+        function setFilter(filter) {
+            currentFilter = filter;
+            document.querySelectorAll('.filter-buttons button').forEach(btn => {
+                btn.classList.remove('active');
+            });
+            event.target.classList.add('active');
+            renderPlants();
+        }
+
+        function filterPlants() {
+            renderPlants();
+        }
+
+        function renderPlants() {
+            const searchTerm = document.getElementById('searchInput').value.toLowerCase();
+            let filtered = plants.filter(plant => {
+                const matchesSearch = !searchTerm ||
+                    plant.name.toLowerCase().includes(searchTerm) ||
+                    (plant.species && plant.species.toLowerCase().includes(searchTerm)) ||
+                    (plant.location && plant.location.toLowerCase().includes(searchTerm));
+
+                if (!matchesSearch) return false;
+
+                if (currentFilter === 'needs-water') return needsWatering(plant);
+                if (currentFilter === 'upcoming') return !needsWatering(plant);
+                return true;
+            });
+
+            document.getElementById('totalPlants').textContent = plants.length;
+            document.getElementById('needsWater').textContent = plants.filter(needsWatering).length;
+
+            const grid = document.getElementById('plantGrid');
+
+            if (filtered.length === 0) {
+                grid.innerHTML = `
+                    <div class="empty-state">
+                        <h2>${plants.length === 0 ? 'No plants yet!' : 'No plants found'}</h2>
+                        <p>${plants.length === 0 ? 'Click the "Add Plant" button to get started.' : 'Try adjusting your filters or search term.'}</p>
+                    </div>
+                `;
+                return;
+            }
+
+            grid.innerHTML = filtered.map(plant => {
+                const status = getWateringStatus(plant);
+                const needsWater = needsWatering(plant);
+
+                return `
+                    <div class="plant-card ${needsWater ? 'needs-water' : ''}">
+                        <h3>${plant.name}</h3>
+                        ${plant.species ? `<p><em>${plant.species}</em></p>` : ''}
+                        ${plant.location ? `<p>📍 ${plant.location}</p>` : ''}
+                        <div class="watering-status ${status.class}">
+                            ${status.text}
+                        </div>
+                        <p><small>Last watered: ${plant.lastWatered ? new Date(plant.lastWatered).toLocaleDateString() : 'Never'}</small></p>
+                        ${plant.wateringFrequency ? `<p><small>Every ${plant.wateringFrequency} days</small></p>` : ''}
+                        <button class="btn-water" onclick="waterPlant('${plant.id}')">💧 Water</button>
+                        <button class="btn-delete" onclick="deletePlant('${plant.id}')">🗑️ Delete</button>
+                    </div>
+                `;
+            }).join('');
+        }
+
+        // Initial render
+        renderPlants();
+    </script>
+</body>
+</html>
