@@ -5,11 +5,17 @@ import {
   needsWatering,
 } from '../utils/plantStorage';
 import { getSpecies } from '../data/plantDatabase';
+import { usePlantPhotos } from '../hooks/usePlantPhotos';
 import CareCard from './CareCard';
 import './PlantCard.css';
 
 function PlantCard({ plant, onWater, onEdit, onDelete }) {
   const [showDetails, setShowDetails] = useState(false);
+  const [savingPhoto, setSavingPhoto] = useState(false);
+
+  const { photos, add: addPhoto, remove: removePhoto } = usePlantPhotos(plant.id);
+  // Most recent photo doubles as the card's cover image
+  const cover = photos.length > 0 ? photos[photos.length - 1] : null;
 
   const daysUntil = getDaysUntilNextWatering(plant);
   const isThirsty = needsWatering(plant);
@@ -32,8 +38,33 @@ function PlantCard({ plant, onWater, onEdit, onDelete }) {
 
   const status = getWateringStatus();
 
+  const handlePhotoChange = async (e) => {
+    const file = e.target.files && e.target.files[0];
+    e.target.value = ''; // allow re-selecting the same file later
+    if (!file) return;
+    setSavingPhoto(true);
+    try {
+      await addPhoto(file);
+    } catch (error) {
+      console.error(error);
+      alert('Sorry, that photo could not be saved. Try a different image.');
+    } finally {
+      setSavingPhoto(false);
+    }
+  };
+
+  const handleDeletePhoto = (id) => {
+    if (window.confirm('Delete this photo?')) {
+      removePhoto(id);
+    }
+  };
+
   return (
     <div className={`plant-card ${isThirsty ? 'needs-water' : ''}`}>
+      {cover && (
+        <img className="plant-cover" src={cover.url} alt={plant.name} />
+      )}
+
       <div className="plant-card-header">
         <div className="plant-info">
           <h3>{plant.name}</h3>
@@ -71,6 +102,44 @@ function PlantCard({ plant, onWater, onEdit, onDelete }) {
 
       {showDetails && (
         <div className="plant-details">
+          <div className="photo-section">
+            <div className="photo-section-header">
+              <strong>📷 Photos</strong>
+              <label className={`btn-add-photo ${savingPhoto ? 'disabled' : ''}`}>
+                {savingPhoto ? 'Saving…' : '+ Add Photo'}
+                <input
+                  type="file"
+                  accept="image/*"
+                  onChange={handlePhotoChange}
+                  disabled={savingPhoto}
+                  hidden
+                />
+              </label>
+            </div>
+            {photos.length > 0 ? (
+              <div className="photo-grid">
+                {photos.map((photo) => (
+                  <div key={photo.id} className="photo-thumb">
+                    <img src={photo.url} alt={`${plant.name} on ${formatDate(photo.takenAt)}`} />
+                    <button
+                      className="photo-delete"
+                      onClick={() => handleDeletePhoto(photo.id)}
+                      title="Delete photo"
+                    >
+                      ✕
+                    </button>
+                    <span className="photo-date">{formatDate(photo.takenAt)}</span>
+                  </div>
+                ))}
+              </div>
+            ) : (
+              <p className="photo-empty">
+                No photos yet — add one to see this plant at a glance and track
+                its growth over time.
+              </p>
+            )}
+          </div>
+
           {species && <CareCard species={species} />}
           {plant.notes && (
             <div className="detail-section">
