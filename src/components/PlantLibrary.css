@@ -32,7 +32,7 @@
 
 .library-search:focus {
   outline: none;
-  border-color: #667eea;
+  border-color: #48bb78;
 }
 
 .library-empty {
@@ -150,7 +150,7 @@
 }
 
 .btn-add-from-library {
-  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+  background: linear-gradient(135deg, #48bb78 0%, #2f855a 100%);
   color: white;
   border: none;
   padding: 12px;
@@ -161,7 +161,7 @@
 }
 
 .btn-add-from-library:hover {
-  box-shadow: 0 4px 8px rgba(102, 126, 234, 0.4);
+  box-shadow: 0 4px 8px rgba(72, 187, 120, 0.4);
 }
 
 @media (max-width: 768px) {

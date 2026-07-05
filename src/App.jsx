@@ -10,6 +10,7 @@ import {
   waterPlant,
   needsWatering
 } from './utils/plantStorage';
+import { deletePhotosForPlant } from './utils/photoStorage';
 import './App.css';
 
 // If the chosen name is already taken, add a number: "Spider Plant" →
@@ -67,6 +68,7 @@ function App() {
   const handleDeletePlant = (id) => {
     if (window.confirm('Are you sure you want to delete this plant?')) {
       deletePlant(id);
+      deletePhotosForPlant(id).catch(console.error);
       setPlants(getPlants());
     }
   };
@@ -211,7 +213,7 @@ function App() {
               <div className="empty-state">
                 {plants.length === 0 ? (
                   <>
-                    <h2>No plants yet!</h2>
+                    <h2>🌿 No plants yet!</h2>
                     <p>
                       Click "Add Plant" to get started, or browse the Plant
                       Library for care guides and one-tap adding.
