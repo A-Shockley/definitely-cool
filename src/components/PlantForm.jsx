@@ -1,6 +1,10 @@
 import { useState } from 'react';
 import { PLANT_DATABASE, getSpecies, getSpeciesByCategory } from '../data/plantDatabase';
+import { ROOMS } from '../data/rooms';
 import './PlantForm.css';
+
+// Sentinel value for the "Other…" room option.
+const OTHER_ROOM = '__other__';
 
 const emptyForm = {
   speciesId: '',
@@ -50,6 +54,23 @@ function PlantForm({ plant, initialSpecies, onSave, onCancel }) {
     }
     return emptyForm;
   });
+
+  // Track whether the location is a custom (typed) room rather than one
+  // from the ROOMS list — e.g. a plant saved before rooms existed.
+  const [customRoom, setCustomRoom] = useState(
+    () => Boolean(plant?.location) && !ROOMS.includes(plant.location)
+  );
+
+  const handleRoomChange = (e) => {
+    const value = e.target.value;
+    if (value === OTHER_ROOM) {
+      setCustomRoom(true);
+      setFormData((prev) => ({ ...prev, location: '' }));
+    } else {
+      setCustomRoom(false);
+      setFormData((prev) => ({ ...prev, location: value }));
+    }
+  };
 
   const handleSpeciesChange = (e) => {
     const id = e.target.value;
@@ -156,15 +177,30 @@ function PlantForm({ plant, initialSpecies, onSave, onCancel }) {
           </div>
 
           <div className="form-group">
-            <label htmlFor="location">Location</label>
-            <input
-              type="text"
-              id="location"
-              name="location"
-              value={formData.location}
-              onChange={handleChange}
-              placeholder="e.g., Living room, Window sill"
-            />
+            <label htmlFor="room">Room</label>
+            <select
+              id="room"
+              value={customRoom ? OTHER_ROOM : formData.location}
+              onChange={handleRoomChange}
+            >
+              <option value="">Choose a room...</option>
+              {ROOMS.map((room) => (
+                <option key={room} value={room}>
+                  {room}
+                </option>
+              ))}
+              <option value={OTHER_ROOM}>Other...</option>
+            </select>
+            {customRoom && (
+              <input
+                type="text"
+                id="location"
+                name="location"
+                value={formData.location}
+                onChange={handleChange}
+                placeholder="Type a location, e.g., Front porch"
+              />
+            )}
           </div>
 
           <div className="form-row">

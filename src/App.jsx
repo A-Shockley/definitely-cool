@@ -12,6 +12,16 @@ import {
 } from './utils/plantStorage';
 import './App.css';
 
+// If the chosen name is already taken, add a number: "Spider Plant" →
+// "Spider Plant 2", "Spider Plant 3", ... so identical plants stay
+// distinguishable.
+const uniqueName = (name, plants) => {
+  if (!plants.some((p) => p.name === name)) return name;
+  let n = 2;
+  while (plants.some((p) => p.name === `${name} ${n}`)) n++;
+  return `${name} ${n}`;
+};
+
 function App() {
   const [plants, setPlants] = useState(() => getPlants());
   const [showForm, setShowForm] = useState(false);
@@ -19,6 +29,7 @@ function App() {
   const [formSpecies, setFormSpecies] = useState(null); // prefill from the library
   const [activeTab, setActiveTab] = useState('plants'); // plants | library
   const [filterView, setFilterView] = useState('all'); // all, needs-water, upcoming
+  const [roomFilter, setRoomFilter] = useState('all');
   const [searchTerm, setSearchTerm] = useState('');
 
   const handleAddPlant = () => {
@@ -44,7 +55,7 @@ function App() {
     if (editingPlant) {
       updatePlant(editingPlant.id, plantData);
     } else {
-      addPlant(plantData);
+      addPlant({ ...plantData, name: uniqueName(plantData.name, plants) });
     }
     setPlants(getPlants());
     setShowForm(false);
@@ -71,8 +82,16 @@ function App() {
     setFormSpecies(null);
   };
 
-  // Filter plants based on view and search
+  // Every room currently in use, for the room filter dropdown
+  const roomsInUse = [...new Set(plants.map((p) => p.location).filter(Boolean))].sort();
+
+  // Filter plants based on view, room, and search
   const filteredPlants = plants.filter(plant => {
+    // Room filter
+    if (roomFilter !== 'all' && plant.location !== roomFilter) {
+      return false;
+    }
+
     // Search filter
     if (searchTerm) {
       const search = searchTerm.toLowerCase();
@@ -148,6 +167,21 @@ function App() {
                 value={searchTerm}
                 onChange={(e) => setSearchTerm(e.target.value)}
               />
+              {roomsInUse.length > 0 && (
+                <select
+                  className="room-filter"
+                  value={roomFilter}
+                  onChange={(e) => setRoomFilter(e.target.value)}
+                  title="Filter by room"
+                >
+                  <option value="all">🏠 All rooms</option>
+                  {roomsInUse.map((room) => (
+                    <option key={room} value={room}>
+                      {room}
+                    </option>
+                  ))}
+                </select>
+              )}
             </div>
 
             <div className="filter-buttons">
