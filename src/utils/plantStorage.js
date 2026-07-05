@@ -6,12 +6,26 @@ const STORAGE_KEY = 'plant-tracker-data';
 export const getPlants = () => {
   try {
     const data = localStorage.getItem(STORAGE_KEY);
-    return data ? JSON.parse(data) : [];
+    const plants = data ? JSON.parse(data) : [];
+    // One-time migration: plants saved before watering history existed
+    // only have lastWatered — seed their history from it.
+    let migrated = false;
+    plants.forEach((plant) => {
+      if (!Array.isArray(plant.wateringHistory)) {
+        plant.wateringHistory = plant.lastWatered ? [plant.lastWatered] : [];
+        migrated = true;
+      }
+    });
+    if (migrated) savePlants(plants);
+    return plants;
   } catch (error) {
     console.error('Error reading plants from storage:', error);
     return [];
   }
 };
+
+// Replace the entire collection (used by backup import).
+export const replaceAllPlants = (plants) => savePlants(plants);
 
 // Save plants to localStorage
 export const savePlants = (plants) => {
@@ -58,11 +72,39 @@ export const deletePlant = (id) => {
   return filtered;
 };
 
-// Water a plant (update lastWatered timestamp)
-export const waterPlant = (id) => {
-  return updatePlant(id, {
-    lastWatered: new Date().toISOString()
-  });
+// Log a watering. Pass a date to record a past ("watered late") event;
+// defaults to now. Every watering is appended to the plant's history.
+export const waterPlant = (id, dateISO = new Date().toISOString()) => {
+  const plants = getPlants();
+  const plant = plants.find((p) => p.id === id);
+  if (!plant) return null;
+  plant.wateringHistory = [...(plant.wateringHistory || []), dateISO].sort();
+  plant.lastWatered = plant.wateringHistory[plant.wateringHistory.length - 1];
+  plant.snoozedUntil = null; // watering clears any snooze
+  savePlants(plants);
+  return plant;
+};
+
+// Remove one history entry (undo a mistaken log).
+export const removeWateringEntry = (id, dateISO) => {
+  const plants = getPlants();
+  const plant = plants.find((p) => p.id === id);
+  if (!plant) return null;
+  plant.wateringHistory = (plant.wateringHistory || []).filter((d) => d !== dateISO);
+  plant.lastWatered =
+    plant.wateringHistory.length > 0
+      ? plant.wateringHistory[plant.wateringHistory.length - 1]
+      : null;
+  savePlants(plants);
+  return plant;
+};
+
+// Push this plant's next watering out a couple of days ("soil is still
+// damp, ask me again later").
+export const snoozePlant = (id, days = 2) => {
+  const until = new Date();
+  until.setDate(until.getDate() + days);
+  return updatePlant(id, { snoozedUntil: until.toISOString() });
 };
 
 // Winter months (Northern Hemisphere): November through February.
@@ -96,8 +138,14 @@ export const getDaysUntilNextWatering = (plant) => {
     return null;
   }
 
-  const nextWatering = startOfDay(plant.lastWatered);
+  let nextWatering = startOfDay(plant.lastWatered);
   nextWatering.setDate(nextWatering.getDate() + frequency);
+
+  // A snooze pushes the next watering out if it lands later.
+  if (plant.snoozedUntil) {
+    const snooze = startOfDay(plant.snoozedUntil);
+    if (snooze > nextWatering) nextWatering = snooze;
+  }
 
   return Math.round((nextWatering - startOfDay(new Date())) / (1000 * 60 * 60 * 24));
 };
