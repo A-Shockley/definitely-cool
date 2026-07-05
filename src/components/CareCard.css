@@ -1,0 +1,82 @@
+.care-card {
+  background: #f0fff4;
+  border: 1px solid #9ae6b4;
+  border-radius: 10px;
+  padding: 15px;
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  font-size: 0.9rem;
+}
+
+.care-card-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 8px;
+}
+
+.care-card-title {
+  font-weight: 700;
+  color: #22543d;
+}
+
+.toxicity-badge {
+  padding: 4px 10px;
+  border-radius: 999px;
+  font-size: 0.8rem;
+  font-weight: 600;
+}
+
+.toxicity-badge.toxic {
+  background: #fed7d7;
+  color: #c53030;
+}
+
+.toxicity-badge.safe {
+  background: #c6f6d5;
+  color: #22543d;
+}
+
+.care-card-name {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+
+.care-card-name strong {
+  color: #2d3748;
+}
+
+.care-card-name em {
+  color: #718096;
+  font-size: 0.85rem;
+}
+
+.care-facts {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.care-fact {
+  display: flex;
+  gap: 10px;
+  align-items: baseline;
+}
+
+.care-fact-label {
+  flex-shrink: 0;
+  min-width: 105px;
+  font-weight: 600;
+  color: #2f855a;
+}
+
+.care-tips {
+  background: white;
+  border-radius: 8px;
+  padding: 10px 12px;
+  color: #4a5568;
+  line-height: 1.5;
+}

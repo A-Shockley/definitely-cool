@@ -70,6 +70,36 @@ body {
   transform: translateY(0);
 }
 
+/* Tabs */
+.app-tabs {
+  display: flex;
+  gap: 10px;
+  margin-bottom: 20px;
+}
+
+.app-tabs button {
+  flex: 1;
+  padding: 14px 20px;
+  border: none;
+  border-radius: 12px;
+  background: rgba(255, 255, 255, 0.25);
+  color: white;
+  font-size: 1.05rem;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.2s;
+}
+
+.app-tabs button:hover {
+  background: rgba(255, 255, 255, 0.4);
+}
+
+.app-tabs button.active {
+  background: white;
+  color: #4a5568;
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+}
+
 /* Stats */
 .app-stats {
   display: grid;
