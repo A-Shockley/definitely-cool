@@ -2,15 +2,19 @@ import { useState } from 'react';
 import PlantCard from './components/PlantCard';
 import PlantForm from './components/PlantForm';
 import PlantLibrary from './components/PlantLibrary';
+import BackupPanel from './components/BackupPanel';
 import {
   getPlants,
   addPlant,
   updatePlant,
   deletePlant,
   waterPlant,
+  snoozePlant,
+  removeWateringEntry,
   needsWatering
 } from './utils/plantStorage';
 import { deletePhotosForPlant } from './utils/photoStorage';
+import { shouldRemindBackup, dismissBackupReminder } from './utils/exportUtils';
 import './App.css';
 
 // If the chosen name is already taken, add a number: "Spider Plant" →
@@ -28,7 +32,10 @@ function App() {
   const [showForm, setShowForm] = useState(false);
   const [editingPlant, setEditingPlant] = useState(null);
   const [formSpecies, setFormSpecies] = useState(null); // prefill from the library
-  const [activeTab, setActiveTab] = useState('plants'); // plants | library
+  const [activeTab, setActiveTab] = useState('plants'); // plants | library | backup
+  const [showBackupReminder, setShowBackupReminder] = useState(
+    () => shouldRemindBackup(getPlants().length)
+  );
   const [filterView, setFilterView] = useState('all'); // all, needs-water, upcoming
   const [roomFilter, setRoomFilter] = useState('all');
   const [searchTerm, setSearchTerm] = useState('');
@@ -76,6 +83,28 @@ function App() {
   const handleWaterPlant = (id) => {
     waterPlant(id);
     setPlants(getPlants());
+  };
+
+  // "Watered late" — record a watering on a past date
+  const handleWaterPlantOn = (id, dateISO) => {
+    waterPlant(id, dateISO);
+    setPlants(getPlants());
+  };
+
+  // "Soil is still damp" — push the reminder out 2 days
+  const handleSnoozePlant = (id) => {
+    snoozePlant(id);
+    setPlants(getPlants());
+  };
+
+  const handleRemoveWatering = (id, dateISO) => {
+    removeWateringEntry(id, dateISO);
+    setPlants(getPlants());
+  };
+
+  const handleDismissReminder = () => {
+    dismissBackupReminder();
+    setShowBackupReminder(false);
   };
 
   const handleCancelForm = () => {
@@ -144,9 +173,43 @@ function App() {
         >
           📚 Plant Library
         </button>
+        <button
+          className={activeTab === 'backup' ? 'active' : ''}
+          onClick={() => setActiveTab('backup')}
+        >
+          💾 Backup
+        </button>
       </nav>
 
-      {activeTab === 'library' ? (
+      {showBackupReminder && activeTab !== 'backup' && (
+        <div className="backup-reminder">
+          <span>
+            💾 It's been a while since your last backup — your plants live
+            only in this browser.
+          </span>
+          <div className="backup-reminder-actions">
+            <button
+              className="reminder-go"
+              onClick={() => setActiveTab('backup')}
+            >
+              Back up now
+            </button>
+            <button className="reminder-dismiss" onClick={handleDismissReminder}>
+              Later
+            </button>
+          </div>
+        </div>
+      )}
+
+      {activeTab === 'backup' ? (
+        <BackupPanel
+          plantCount={plants.length}
+          onImported={() => {
+            setPlants(getPlants());
+            setShowBackupReminder(false);
+          }}
+        />
+      ) : activeTab === 'library' ? (
         <PlantLibrary onAddSpecies={handleAddSpecies} />
       ) : (
         <>
@@ -232,6 +295,9 @@ function App() {
                   key={plant.id}
                   plant={plant}
                   onWater={handleWaterPlant}
+                  onWaterOn={handleWaterPlantOn}
+                  onSnooze={handleSnoozePlant}
+                  onRemoveWatering={handleRemoveWatering}
                   onEdit={handleEditPlant}
                   onDelete={handleDeletePlant}
                 />

@@ -114,6 +114,47 @@ textarea {
   box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
 }
 
+/* Backup reminder banner */
+.backup-reminder {
+  background: #fffbeb;
+  border: 2px solid #f6e05e;
+  border-radius: 12px;
+  padding: 14px 20px;
+  margin-bottom: 20px;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 15px;
+  flex-wrap: wrap;
+  color: #744210;
+  font-weight: 600;
+}
+
+.backup-reminder-actions {
+  display: flex;
+  gap: 8px;
+}
+
+.reminder-go {
+  background: linear-gradient(135deg, #48bb78 0%, #2f855a 100%);
+  color: white;
+  border: none;
+  border-radius: 8px;
+  padding: 9px 16px;
+  font-weight: 600;
+  cursor: pointer;
+}
+
+.reminder-dismiss {
+  background: none;
+  border: 1px solid #d69e2e;
+  color: #744210;
+  border-radius: 8px;
+  padding: 9px 16px;
+  font-weight: 600;
+  cursor: pointer;
+}
+
 /* Stats */
 .app-stats {
   display: grid;

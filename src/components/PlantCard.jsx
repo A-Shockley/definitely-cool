@@ -9,9 +9,10 @@ import { usePlantPhotos } from '../hooks/usePlantPhotos';
 import CareCard from './CareCard';
 import './PlantCard.css';
 
-function PlantCard({ plant, onWater, onEdit, onDelete }) {
+function PlantCard({ plant, onWater, onWaterOn, onSnooze, onRemoveWatering, onEdit, onDelete }) {
   const [showDetails, setShowDetails] = useState(false);
   const [savingPhoto, setSavingPhoto] = useState(false);
+  const [pastDate, setPastDate] = useState('');
 
   const { photos, add: addPhoto, remove: removePhoto } = usePlantPhotos(plant.id);
   // Most recent photo doubles as the card's cover image
@@ -59,6 +60,17 @@ function PlantCard({ plant, onWater, onEdit, onDelete }) {
     }
   };
 
+  const handleLogPastWatering = () => {
+    if (!pastDate) return;
+    // Anchor the chosen day at local noon so timezones can't shift it.
+    const [year, month, day] = pastDate.split('-').map(Number);
+    onWaterOn(plant.id, new Date(year, month - 1, day, 12).toISOString());
+    setPastDate('');
+  };
+
+  // Watering history, most recent first
+  const history = [...(plant.wateringHistory || [])].reverse();
+
   return (
     <div className={`plant-card ${isThirsty ? 'needs-water' : ''}`}>
       {cover && (
@@ -79,6 +91,15 @@ function PlantCard({ plant, onWater, onEdit, onDelete }) {
           >
             💧 Water
           </button>
+          {isThirsty && (
+            <button
+              className="btn-snooze"
+              onClick={() => onSnooze(plant.id)}
+              title="Soil still damp? Push the reminder out 2 days"
+            >
+              😴 +2d
+            </button>
+          )}
         </div>
       </div>
 
@@ -138,6 +159,46 @@ function PlantCard({ plant, onWater, onEdit, onDelete }) {
                 its growth over time.
               </p>
             )}
+          </div>
+
+          <div className="history-section">
+            <strong>💧 Watering History ({history.length})</strong>
+            {history.length > 0 ? (
+              <ul className="history-list">
+                {history.slice(0, 6).map((date) => (
+                  <li key={date}>
+                    <span>{formatDate(date)}</span>
+                    <button
+                      className="history-remove"
+                      onClick={() => onRemoveWatering(plant.id, date)}
+                      title="Remove this entry (logged by mistake)"
+                    >
+                      ✕
+                    </button>
+                  </li>
+                ))}
+                {history.length > 6 && (
+                  <li className="history-more">…and {history.length - 6} more</li>
+                )}
+              </ul>
+            ) : (
+              <p className="history-empty">No waterings logged yet.</p>
+            )}
+            <div className="history-log-past">
+              <input
+                type="date"
+                value={pastDate}
+                max={new Date().toISOString().slice(0, 10)}
+                onChange={(e) => setPastDate(e.target.value)}
+                title="Forgot to log a watering? Pick the day it happened"
+              />
+              <button
+                onClick={handleLogPastWatering}
+                disabled={!pastDate}
+              >
+                Log past watering
+              </button>
+            </div>
           </div>
 
           {species && <CareCard species={species} />}
