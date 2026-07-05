@@ -1,0 +1,171 @@
+.plant-library {
+  display: flex;
+  flex-direction: column;
+  gap: 20px;
+  margin-bottom: 20px;
+}
+
+.library-intro {
+  background: white;
+  border-radius: 12px;
+  padding: 25px;
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+}
+
+.library-intro h2 {
+  color: #2d3748;
+  margin-bottom: 8px;
+}
+
+.library-intro p {
+  color: #718096;
+  margin-bottom: 15px;
+}
+
+.library-search {
+  width: 100%;
+  padding: 12px 20px;
+  font-size: 1rem;
+  border: 2px solid #e2e8f0;
+  border-radius: 8px;
+}
+
+.library-search:focus {
+  outline: none;
+  border-color: #667eea;
+}
+
+.library-empty {
+  background: white;
+  border-radius: 12px;
+  padding: 40px;
+  text-align: center;
+  color: #718096;
+}
+
+.library-category h3 {
+  color: white;
+  margin-bottom: 12px;
+  font-size: 1.3rem;
+  text-shadow: 0 1px 3px rgba(0, 0, 0, 0.2);
+}
+
+.library-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(340px, 1fr));
+  gap: 15px;
+}
+
+.library-item {
+  background: white;
+  border-radius: 12px;
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+  overflow: hidden;
+}
+
+.library-item-header {
+  width: 100%;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 10px;
+  padding: 16px;
+  background: white;
+  border: none;
+  cursor: pointer;
+  text-align: left;
+  font-family: inherit;
+  font-size: 1rem;
+}
+
+.library-item-header:hover {
+  background: #f7fafc;
+}
+
+.library-item-name {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+
+.library-item-name strong {
+  color: #2d3748;
+}
+
+.library-item-name em {
+  color: #718096;
+  font-size: 0.85rem;
+}
+
+.library-item-name small {
+  color: #a0aec0;
+  font-size: 0.78rem;
+}
+
+.library-item-badges {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  flex-shrink: 0;
+}
+
+.mini-badge {
+  padding: 3px 8px;
+  border-radius: 999px;
+  font-size: 0.72rem;
+  font-weight: 700;
+  white-space: nowrap;
+}
+
+.mini-badge.safe {
+  background: #c6f6d5;
+  color: #22543d;
+}
+
+.mini-badge.diff-easy {
+  background: #bee3f8;
+  color: #2a4365;
+}
+
+.mini-badge.diff-moderate {
+  background: #feebc8;
+  color: #7b341e;
+}
+
+.mini-badge.diff-hard {
+  background: #fed7d7;
+  color: #c53030;
+}
+
+.expand-arrow {
+  color: #a0aec0;
+  font-size: 0.8rem;
+}
+
+.library-item-body {
+  padding: 0 16px 16px;
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+.btn-add-from-library {
+  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+  color: white;
+  border: none;
+  padding: 12px;
+  border-radius: 8px;
+  font-size: 0.95rem;
+  font-weight: 600;
+  cursor: pointer;
+}
+
+.btn-add-from-library:hover {
+  box-shadow: 0 4px 8px rgba(102, 126, 234, 0.4);
+}
+
+@media (max-width: 768px) {
+  .library-grid {
+    grid-template-columns: 1fr;
+  }
+}

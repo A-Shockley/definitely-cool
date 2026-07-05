@@ -54,6 +54,29 @@
   gap: 8px;
 }
 
+.form-row {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 15px;
+}
+
+.species-picker {
+  background: #f0fff4;
+  border: 1px solid #9ae6b4;
+  border-radius: 10px;
+  padding: 14px;
+}
+
+.species-picker small {
+  color: #2f855a;
+}
+
+@media (max-width: 640px) {
+  .form-row {
+    grid-template-columns: 1fr;
+  }
+}
+
 .form-group label {
   color: #2d3748;
   font-weight: 600;

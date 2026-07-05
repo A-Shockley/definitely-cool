@@ -65,21 +65,41 @@ export const waterPlant = (id) => {
   });
 };
 
+// Winter months (Northern Hemisphere): November through February.
+// Most houseplants slow down and need less water in these months.
+const isWinter = () => {
+  const month = new Date().getMonth(); // 0 = January
+  return month === 10 || month === 11 || month === 0 || month === 1;
+};
+
+// The watering interval that applies right now for this plant.
+// Plants with seasonal intervals switch automatically; plants with only a
+// single wateringFrequency (older records or custom plants) use that.
+export const getEffectiveFrequency = (plant) => {
+  if (plant.wateringFrequencySummer && plant.wateringFrequencyWinter) {
+    return isWinter() ? plant.wateringFrequencyWinter : plant.wateringFrequencySummer;
+  }
+  return plant.wateringFrequency || plant.wateringFrequencySummer || null;
+};
+
+// Normalize a date to midnight so day math ignores the time of day.
+const startOfDay = (date) => {
+  const d = new Date(date);
+  d.setHours(0, 0, 0, 0);
+  return d;
+};
+
 // Calculate days until next watering
 export const getDaysUntilNextWatering = (plant) => {
-  if (!plant.lastWatered || !plant.wateringFrequency) {
+  const frequency = getEffectiveFrequency(plant);
+  if (!plant.lastWatered || !frequency) {
     return null;
   }
 
-  const lastWatered = new Date(plant.lastWatered);
-  const nextWatering = new Date(lastWatered);
-  nextWatering.setDate(nextWatering.getDate() + plant.wateringFrequency);
+  const nextWatering = startOfDay(plant.lastWatered);
+  nextWatering.setDate(nextWatering.getDate() + frequency);
 
-  const today = new Date();
-  const diffTime = nextWatering - today;
-  const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24));
-
-  return diffDays;
+  return Math.round((nextWatering - startOfDay(new Date())) / (1000 * 60 * 60 * 24));
 };
 
 // Check if plant needs watering

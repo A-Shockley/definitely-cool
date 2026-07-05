@@ -1,5 +1,11 @@
 import { useState } from 'react';
-import { getDaysUntilNextWatering, needsWatering } from '../utils/plantStorage';
+import {
+  getDaysUntilNextWatering,
+  getEffectiveFrequency,
+  needsWatering,
+} from '../utils/plantStorage';
+import { getSpecies } from '../data/plantDatabase';
+import CareCard from './CareCard';
 import './PlantCard.css';
 
 function PlantCard({ plant, onWater, onEdit, onDelete }) {
@@ -7,6 +13,8 @@ function PlantCard({ plant, onWater, onEdit, onDelete }) {
 
   const daysUntil = getDaysUntilNextWatering(plant);
   const isThirsty = needsWatering(plant);
+  const frequency = getEffectiveFrequency(plant);
+  const species = plant.speciesId ? getSpecies(plant.speciesId) : null;
 
   const formatDate = (dateString) => {
     if (!dateString) return 'Never';
@@ -49,8 +57,8 @@ function PlantCard({ plant, onWater, onEdit, onDelete }) {
 
       <div className="plant-meta">
         <span>Last watered: {formatDate(plant.lastWatered)}</span>
-        {plant.wateringFrequency && (
-          <span>Every {plant.wateringFrequency} days</span>
+        {frequency && (
+          <span>Every {frequency} days</span>
         )}
       </div>
 
@@ -63,18 +71,19 @@ function PlantCard({ plant, onWater, onEdit, onDelete }) {
 
       {showDetails && (
         <div className="plant-details">
+          {species && <CareCard species={species} />}
           {plant.notes && (
             <div className="detail-section">
               <strong>Notes:</strong>
               <p>{plant.notes}</p>
             </div>
           )}
-          {plant.lightRequirement && (
+          {!species && plant.lightRequirement && (
             <div className="detail-section">
               <strong>Light:</strong> {plant.lightRequirement}
             </div>
           )}
-          {plant.soilType && (
+          {!species && plant.soilType && (
             <div className="detail-section">
               <strong>Soil:</strong> {plant.soilType}
             </div>

@@ -1,6 +1,7 @@
-import { useState, useEffect } from 'react';
+import { useState } from 'react';
 import PlantCard from './components/PlantCard';
 import PlantForm from './components/PlantForm';
+import PlantLibrary from './components/PlantLibrary';
 import {
   getPlants,
   addPlant,
@@ -12,24 +13,30 @@ import {
 import './App.css';
 
 function App() {
-  const [plants, setPlants] = useState([]);
+  const [plants, setPlants] = useState(() => getPlants());
   const [showForm, setShowForm] = useState(false);
   const [editingPlant, setEditingPlant] = useState(null);
+  const [formSpecies, setFormSpecies] = useState(null); // prefill from the library
+  const [activeTab, setActiveTab] = useState('plants'); // plants | library
   const [filterView, setFilterView] = useState('all'); // all, needs-water, upcoming
   const [searchTerm, setSearchTerm] = useState('');
 
-  // Load plants on mount
-  useEffect(() => {
-    setPlants(getPlants());
-  }, []);
-
   const handleAddPlant = () => {
     setEditingPlant(null);
+    setFormSpecies(null);
     setShowForm(true);
   };
 
   const handleEditPlant = (plant) => {
     setEditingPlant(plant);
+    setFormSpecies(null);
+    setShowForm(true);
+  };
+
+  // "Add to My Plants" from the Plant Library
+  const handleAddSpecies = (species) => {
+    setEditingPlant(null);
+    setFormSpecies(species);
     setShowForm(true);
   };
 
@@ -42,6 +49,8 @@ function App() {
     setPlants(getPlants());
     setShowForm(false);
     setEditingPlant(null);
+    setFormSpecies(null);
+    setActiveTab('plants');
   };
 
   const handleDeletePlant = (id) => {
@@ -59,6 +68,7 @@ function App() {
   const handleCancelForm = () => {
     setShowForm(false);
     setEditingPlant(null);
+    setFormSpecies(null);
   };
 
   // Filter plants based on view and search
@@ -100,80 +110,105 @@ function App() {
         </button>
       </header>
 
-      <div className="app-stats">
-        <div className="stat">
-          <span className="stat-number">{plantStats.total}</span>
-          <span className="stat-label">Total Plants</span>
-        </div>
-        <div className="stat highlight">
-          <span className="stat-number">{plantStats.needsWater}</span>
-          <span className="stat-label">Need Water</span>
-        </div>
-      </div>
+      <nav className="app-tabs">
+        <button
+          className={activeTab === 'plants' ? 'active' : ''}
+          onClick={() => setActiveTab('plants')}
+        >
+          🪴 My Plants ({plantStats.total})
+        </button>
+        <button
+          className={activeTab === 'library' ? 'active' : ''}
+          onClick={() => setActiveTab('library')}
+        >
+          📚 Plant Library
+        </button>
+      </nav>
 
-      <div className="controls">
-        <div className="search-box">
-          <input
-            type="text"
-            placeholder="🔍 Search plants..."
-            value={searchTerm}
-            onChange={(e) => setSearchTerm(e.target.value)}
-          />
-        </div>
-
-        <div className="filter-buttons">
-          <button
-            className={filterView === 'all' ? 'active' : ''}
-            onClick={() => setFilterView('all')}
-          >
-            All Plants
-          </button>
-          <button
-            className={filterView === 'needs-water' ? 'active' : ''}
-            onClick={() => setFilterView('needs-water')}
-          >
-            Needs Water ({plantStats.needsWater})
-          </button>
-          <button
-            className={filterView === 'upcoming' ? 'active' : ''}
-            onClick={() => setFilterView('upcoming')}
-          >
-            Scheduled
-          </button>
-        </div>
-      </div>
-
-      <main className="plant-grid">
-        {filteredPlants.length === 0 ? (
-          <div className="empty-state">
-            {plants.length === 0 ? (
-              <>
-                <h2>No plants yet!</h2>
-                <p>Click the "Add Plant" button to get started.</p>
-              </>
-            ) : (
-              <>
-                <h2>No plants found</h2>
-                <p>Try adjusting your filters or search term.</p>
-              </>
-            )}
+      {activeTab === 'library' ? (
+        <PlantLibrary onAddSpecies={handleAddSpecies} />
+      ) : (
+        <>
+          <div className="app-stats">
+            <div className="stat">
+              <span className="stat-number">{plantStats.total}</span>
+              <span className="stat-label">Total Plants</span>
+            </div>
+            <div className="stat highlight">
+              <span className="stat-number">{plantStats.needsWater}</span>
+              <span className="stat-label">Need Water</span>
+            </div>
           </div>
-        ) : (
-          filteredPlants.map(plant => (
-            <PlantCard
-              key={plant.id}
-              plant={plant}
-              onWater={handleWaterPlant}
-              onEdit={handleEditPlant}
-              onDelete={handleDeletePlant}
-            />
-          ))
-        )}
-      </main>
+
+          <div className="controls">
+            <div className="search-box">
+              <input
+                type="text"
+                placeholder="🔍 Search plants..."
+                value={searchTerm}
+                onChange={(e) => setSearchTerm(e.target.value)}
+              />
+            </div>
+
+            <div className="filter-buttons">
+              <button
+                className={filterView === 'all' ? 'active' : ''}
+                onClick={() => setFilterView('all')}
+              >
+                All Plants
+              </button>
+              <button
+                className={filterView === 'needs-water' ? 'active' : ''}
+                onClick={() => setFilterView('needs-water')}
+              >
+                Needs Water ({plantStats.needsWater})
+              </button>
+              <button
+                className={filterView === 'upcoming' ? 'active' : ''}
+                onClick={() => setFilterView('upcoming')}
+              >
+                Scheduled
+              </button>
+            </div>
+          </div>
+
+          <main className="plant-grid">
+            {filteredPlants.length === 0 ? (
+              <div className="empty-state">
+                {plants.length === 0 ? (
+                  <>
+                    <h2>No plants yet!</h2>
+                    <p>
+                      Click "Add Plant" to get started, or browse the Plant
+                      Library for care guides and one-tap adding.
+                    </p>
+                  </>
+                ) : (
+                  <>
+                    <h2>No plants found</h2>
+                    <p>Try adjusting your filters or search term.</p>
+                  </>
+                )}
+              </div>
+            ) : (
+              filteredPlants.map(plant => (
+                <PlantCard
+                  key={plant.id}
+                  plant={plant}
+                  onWater={handleWaterPlant}
+                  onEdit={handleEditPlant}
+                  onDelete={handleDeletePlant}
+                />
+              ))
+            )}
+          </main>
+        </>
+      )}
 
       {showForm && (
         <PlantForm
           plant={editingPlant}
+          initialSpecies={formSpecies}
           onSave={handleSavePlant}
           onCancel={handleCancelForm}
         />

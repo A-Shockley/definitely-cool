@@ -1,30 +1,67 @@
-import { useState, useEffect } from 'react';
+import { useState } from 'react';
+import { PLANT_DATABASE, getSpecies, getSpeciesByCategory } from '../data/plantDatabase';
 import './PlantForm.css';
 
-function PlantForm({ plant, onSave, onCancel }) {
-  const [formData, setFormData] = useState({
-    name: '',
-    species: '',
-    location: '',
-    wateringFrequency: '',
-    lightRequirement: '',
-    soilType: '',
-    notes: '',
-  });
+const emptyForm = {
+  speciesId: '',
+  name: '',
+  species: '',
+  location: '',
+  wateringFrequencySummer: '',
+  wateringFrequencyWinter: '',
+  lightRequirement: '',
+  soilType: '',
+  notes: '',
+};
 
-  useEffect(() => {
+// Build form values from a species profile in the built-in database.
+const formFromSpecies = (species, base) => ({
+  ...base,
+  speciesId: species.id,
+  name: base.name || species.commonName,
+  species: species.botanicalName,
+  wateringFrequencySummer: species.waterSummer,
+  wateringFrequencyWinter: species.waterWinter,
+  lightRequirement: species.light,
+  soilType: species.soil,
+});
+
+function PlantForm({ plant, initialSpecies, onSave, onCancel }) {
+  // The form is mounted fresh each time it opens, so we can initialize
+  // state once from whichever starting point applies.
+  const [formData, setFormData] = useState(() => {
     if (plant) {
-      setFormData({
+      return {
+        speciesId: plant.speciesId || '',
         name: plant.name || '',
         species: plant.species || '',
         location: plant.location || '',
-        wateringFrequency: plant.wateringFrequency || '',
+        // Older plants only have wateringFrequency — show it in the summer field
+        wateringFrequencySummer:
+          plant.wateringFrequencySummer || plant.wateringFrequency || '',
+        wateringFrequencyWinter: plant.wateringFrequencyWinter || '',
         lightRequirement: plant.lightRequirement || '',
         soilType: plant.soilType || '',
         notes: plant.notes || '',
-      });
+      };
     }
-  }, [plant]);
+    if (initialSpecies) {
+      return formFromSpecies(initialSpecies, emptyForm);
+    }
+    return emptyForm;
+  });
+
+  const handleSpeciesChange = (e) => {
+    const id = e.target.value;
+    if (!id) {
+      setFormData((prev) => ({ ...prev, speciesId: '' }));
+      return;
+    }
+    const species = getSpecies(id);
+    if (species) {
+      setFormData((prev) => formFromSpecies(species, prev));
+    }
+  };
 
   const handleChange = (e) => {
     const { name, value } = e.target;
@@ -42,19 +79,57 @@ function PlantForm({ plant, onSave, onCancel }) {
       return;
     }
 
+    const summer = formData.wateringFrequencySummer
+      ? parseInt(formData.wateringFrequencySummer)
+      : null;
+    const winter = formData.wateringFrequencyWinter
+      ? parseInt(formData.wateringFrequencyWinter)
+      : null;
+
     const plantData = {
       ...formData,
-      wateringFrequency: formData.wateringFrequency ? parseInt(formData.wateringFrequency) : null,
+      wateringFrequencySummer: summer,
+      wateringFrequencyWinter: winter,
+      // Keep the original single-frequency field in sync for compatibility
+      wateringFrequency: summer,
     };
 
     onSave(plantData);
   };
+
+  const selectedSpecies = formData.speciesId ? getSpecies(formData.speciesId) : null;
 
   return (
     <div className="plant-form-overlay">
       <div className="plant-form-container">
         <h2>{plant ? 'Edit Plant' : 'Add New Plant'}</h2>
         <form onSubmit={handleSubmit}>
+          <div className="form-group species-picker">
+            <label htmlFor="speciesId">Plant Type</label>
+            <select
+              id="speciesId"
+              name="speciesId"
+              value={formData.speciesId}
+              onChange={handleSpeciesChange}
+            >
+              <option value="">Custom / not listed</option>
+              {getSpeciesByCategory().map(({ category, species }) => (
+                <optgroup key={category} label={category}>
+                  {species.map((s) => (
+                    <option key={s.id} value={s.id}>
+                      {s.commonName} ({s.botanicalName})
+                    </option>
+                  ))}
+                </optgroup>
+              ))}
+            </select>
+            <small>
+              {selectedSpecies
+                ? '✓ Care details filled in below — adjust anything you like.'
+                : `Pick from ${PLANT_DATABASE.length} common houseplants to auto-fill care details.`}
+            </small>
+          </div>
+
           <div className="form-group">
             <label htmlFor="name">Plant Name *</label>
             <input
@@ -92,35 +167,54 @@ function PlantForm({ plant, onSave, onCancel }) {
             />
           </div>
 
-          <div className="form-group">
-            <label htmlFor="wateringFrequency">Watering Frequency (days)</label>
-            <input
-              type="number"
-              id="wateringFrequency"
-              name="wateringFrequency"
-              value={formData.wateringFrequency}
-              onChange={handleChange}
-              placeholder="e.g., 7"
-              min="1"
-            />
-            <small>How many days between waterings?</small>
+          <div className="form-row">
+            <div className="form-group">
+              <label htmlFor="wateringFrequencySummer">Watering (summer)</label>
+              <input
+                type="number"
+                id="wateringFrequencySummer"
+                name="wateringFrequencySummer"
+                value={formData.wateringFrequencySummer}
+                onChange={handleChange}
+                placeholder="e.g., 7"
+                min="1"
+              />
+              <small>Days between waterings</small>
+            </div>
+
+            <div className="form-group">
+              <label htmlFor="wateringFrequencyWinter">Watering (winter)</label>
+              <input
+                type="number"
+                id="wateringFrequencyWinter"
+                name="wateringFrequencyWinter"
+                value={formData.wateringFrequencyWinter}
+                onChange={handleChange}
+                placeholder="e.g., 10"
+                min="1"
+              />
+              <small>Optional — Nov to Feb</small>
+            </div>
           </div>
 
           <div className="form-group">
             <label htmlFor="lightRequirement">Light Requirement</label>
-            <select
+            <input
+              type="text"
               id="lightRequirement"
               name="lightRequirement"
               value={formData.lightRequirement}
               onChange={handleChange}
-            >
-              <option value="">Select...</option>
-              <option value="Full sun">Full sun (6+ hours direct)</option>
-              <option value="Partial sun">Partial sun (3-6 hours)</option>
-              <option value="Bright indirect">Bright indirect</option>
-              <option value="Low light">Low light</option>
-              <option value="Shade">Shade</option>
-            </select>
+              placeholder="e.g., Bright indirect"
+              list="light-options"
+            />
+            <datalist id="light-options">
+              <option value="Direct sun" />
+              <option value="Bright indirect" />
+              <option value="Medium to bright indirect" />
+              <option value="Low to medium" />
+              <option value="Low light" />
+            </datalist>
           </div>
 
           <div className="form-group">
