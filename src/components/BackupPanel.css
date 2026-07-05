@@ -76,6 +76,11 @@
   color: #a0aec0 !important;
 }
 
+.notify-enabled {
+  color: #2f855a !important;
+  font-weight: 700;
+}
+
 .backup-message {
   grid-column: 1 / -1;
   border-radius: 10px;

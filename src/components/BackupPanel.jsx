@@ -6,11 +6,26 @@ import {
   openPlantBinder,
   getLastBackupDate,
 } from '../utils/exportUtils';
+import {
+  notificationPermission,
+  requestNotificationPermission,
+} from '../utils/notifications';
 import './BackupPanel.css';
 
 function BackupPanel({ plantCount, onImported }) {
   const [message, setMessage] = useState(null); // { kind: 'ok'|'error', text }
   const [lastBackup, setLastBackup] = useState(() => getLastBackupDate());
+  const [notifyState, setNotifyState] = useState(() => notificationPermission());
+
+  const handleEnableNotifications = async () => {
+    const result = await requestNotificationPermission();
+    setNotifyState(result);
+    if (result === 'granted') {
+      say('ok', "Notifications enabled! You'll get a reminder when you open the app on a day plants need water.");
+    } else if (result === 'denied') {
+      say('error', 'Notifications are blocked. You can re-enable them in your browser settings (the 🔒 icon next to the address bar).');
+    }
+  };
 
   const say = (kind, text) => setMessage({ kind, text });
 
@@ -94,6 +109,29 @@ function BackupPanel({ plantCount, onImported }) {
           The binder opens in a new tab — press Ctrl+P there and choose
           "Save as PDF".
         </p>
+      </div>
+
+      <div className="backup-card">
+        <h2>🔔 Watering Reminders</h2>
+        <p>
+          Get a notification when you open the app on a day that plants need
+          water. (Without a server, the browser can only remind you while
+          the app is open — the "Needs Water" count always shows the
+          up-to-date picture.)
+        </p>
+        <div className="backup-actions">
+          {notifyState === 'granted' ? (
+            <p className="notify-enabled">✅ Notifications are on</p>
+          ) : notifyState === 'unsupported' ? (
+            <p className="notify-enabled">
+              This browser doesn't support notifications.
+            </p>
+          ) : (
+            <button className="btn-primary" onClick={handleEnableNotifications}>
+              🔔 Enable Notifications
+            </button>
+          )}
+        </div>
       </div>
 
       <div className="backup-card">

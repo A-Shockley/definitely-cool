@@ -1,15 +1,29 @@
 import { useState } from 'react';
 import {
   getDaysUntilNextWatering,
+  getDaysUntilNextFertilizing,
   getEffectiveFrequency,
   needsWatering,
+  needsFertilizing,
 } from '../utils/plantStorage';
 import { getSpecies } from '../data/plantDatabase';
 import { usePlantPhotos } from '../hooks/usePlantPhotos';
 import CareCard from './CareCard';
 import './PlantCard.css';
 
-function PlantCard({ plant, onWater, onWaterOn, onSnooze, onRemoveWatering, onEdit, onDelete }) {
+function PlantCard({
+  plant,
+  onWater,
+  onWaterOn,
+  onSnooze,
+  onRemoveWatering,
+  onFertilize,
+  onRepot,
+  onArchive,
+  onRestore,
+  onEdit,
+  onDelete,
+}) {
   const [showDetails, setShowDetails] = useState(false);
   const [savingPhoto, setSavingPhoto] = useState(false);
   const [pastDate, setPastDate] = useState('');
@@ -19,9 +33,26 @@ function PlantCard({ plant, onWater, onWaterOn, onSnooze, onRemoveWatering, onEd
   const cover = photos.length > 0 ? photos[photos.length - 1] : null;
 
   const daysUntil = getDaysUntilNextWatering(plant);
-  const isThirsty = needsWatering(plant);
+  const isThirsty = needsWatering(plant) && !plant.archived;
   const frequency = getEffectiveFrequency(plant);
   const species = plant.speciesId ? getSpecies(plant.speciesId) : null;
+
+  const fertDays = getDaysUntilNextFertilizing(plant);
+  const isHungry = needsFertilizing(plant);
+  const showFeedButton =
+    !plant.archived && plant.fertilizeFrequency && (isHungry || !plant.lastFertilized);
+
+  const fertilizeText = () => {
+    if (!plant.lastFertilized) return 'Feeding not logged yet';
+    if (fertDays < 0) return `Feeding overdue by ${Math.abs(fertDays)} days`;
+    if (fertDays === 0) return 'Feed today';
+    return `Feed in ${fertDays} days`;
+  };
+
+  const lastRepotted =
+    plant.repotHistory && plant.repotHistory.length > 0
+      ? plant.repotHistory[plant.repotHistory.length - 1]
+      : null;
 
   const formatDate = (dateString) => {
     if (!dateString) return 'Never';
@@ -84,28 +115,59 @@ function PlantCard({ plant, onWater, onWaterOn, onSnooze, onRemoveWatering, onEd
           {plant.location && <p className="location">📍 {plant.location}</p>}
         </div>
         <div className="plant-actions">
-          <button
-            className="btn-water"
-            onClick={() => onWater(plant.id)}
-            title="Water this plant"
-          >
-            💧 Water
-          </button>
-          {isThirsty && (
+          {plant.archived ? (
             <button
-              className="btn-snooze"
-              onClick={() => onSnooze(plant.id)}
-              title="Soil still damp? Push the reminder out 2 days"
+              className="btn-restore"
+              onClick={() => onRestore(plant.id)}
+              title="Bring this plant back to your active collection"
             >
-              😴 +2d
+              ↩️ Restore
             </button>
+          ) : (
+            <>
+              <button
+                className="btn-water"
+                onClick={() => onWater(plant.id)}
+                title="Water this plant"
+              >
+                💧 Water
+              </button>
+              {isThirsty && (
+                <button
+                  className="btn-snooze"
+                  onClick={() => onSnooze(plant.id)}
+                  title="Soil still damp? Push the reminder out 2 days"
+                >
+                  😴 +2d
+                </button>
+              )}
+              {showFeedButton && (
+                <button
+                  className="btn-feed"
+                  onClick={() => onFertilize(plant.id)}
+                  title="Log a fertilizing"
+                >
+                  🌿 Feed
+                </button>
+              )}
+            </>
           )}
         </div>
       </div>
 
-      <div className={`watering-status ${status.class}`}>
-        {status.text}
-      </div>
+      {plant.archived ? (
+        <div className="watering-status no-schedule">🗄️ Archived</div>
+      ) : (
+        <div className={`watering-status ${status.class}`}>{status.text}</div>
+      )}
+
+      {!plant.archived && plant.fertilizeFrequency && (
+        <div className={`fertilize-status ${isHungry ? 'due' : ''}`}>
+          🌿 {fertilizeText()}
+          {plant.lastFertilized &&
+            ` • last fed ${formatDate(plant.lastFertilized)}`}
+        </div>
+      )}
 
       <div className="plant-meta">
         <span>Last watered: {formatDate(plant.lastWatered)}</span>
@@ -218,10 +280,35 @@ function PlantCard({ plant, onWater, onWaterOn, onSnooze, onRemoveWatering, onEd
               <strong>Soil:</strong> {plant.soilType}
             </div>
           )}
+          <div className="repot-row">
+            <span>
+              🪴 Last repotted:{' '}
+              {lastRepotted ? formatDate(lastRepotted) : 'not logged'}
+            </span>
+            {!plant.archived && (
+              <button
+                className="btn-repot"
+                onClick={() => onRepot(plant.id)}
+                title="Record that you repotted this plant today"
+              >
+                Repotted today
+              </button>
+            )}
+          </div>
+
           <div className="detail-actions">
             <button className="btn-edit" onClick={() => onEdit(plant)}>
               ✏️ Edit
             </button>
+            {!plant.archived && (
+              <button
+                className="btn-archive"
+                onClick={() => onArchive(plant.id)}
+                title="Hide from your collection but keep its history"
+              >
+                🗄️ Archive
+              </button>
+            )}
             <button className="btn-delete" onClick={() => onDelete(plant.id)}>
               🗑️ Delete
             </button>

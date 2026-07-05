@@ -107,6 +107,32 @@ export const snoozePlant = (id, days = 2) => {
   return updatePlant(id, { snoozedUntil: until.toISOString() });
 };
 
+// Log a fertilizing.
+export const fertilizePlant = (id, dateISO = new Date().toISOString()) => {
+  const plants = getPlants();
+  const plant = plants.find((p) => p.id === id);
+  if (!plant) return null;
+  plant.fertilizeHistory = [...(plant.fertilizeHistory || []), dateISO].sort();
+  plant.lastFertilized = plant.fertilizeHistory[plant.fertilizeHistory.length - 1];
+  savePlants(plants);
+  return plant;
+};
+
+// Log a repotting (no schedule — just a record of when it happened).
+export const repotPlant = (id, dateISO = new Date().toISOString()) => {
+  const plants = getPlants();
+  const plant = plants.find((p) => p.id === id);
+  if (!plant) return null;
+  plant.repotHistory = [...(plant.repotHistory || []), dateISO].sort();
+  savePlants(plants);
+  return plant;
+};
+
+// Archive keeps a plant's record and history but hides it from the
+// active collection (kinder than deleting a plant that didn't make it).
+export const archivePlant = (id) => updatePlant(id, { archived: true });
+export const restorePlant = (id) => updatePlant(id, { archived: false });
+
 // Winter months (Northern Hemisphere): November through February.
 // Most houseplants slow down and need less water in these months.
 const isWinter = () => {
@@ -153,5 +179,18 @@ export const getDaysUntilNextWatering = (plant) => {
 // Check if plant needs watering
 export const needsWatering = (plant) => {
   const daysUntil = getDaysUntilNextWatering(plant);
+  return daysUntil !== null && daysUntil <= 0;
+};
+
+// Days until the next fertilizing (null when not scheduled or never done).
+export const getDaysUntilNextFertilizing = (plant) => {
+  if (!plant.fertilizeFrequency || !plant.lastFertilized) return null;
+  const next = startOfDay(plant.lastFertilized);
+  next.setDate(next.getDate() + plant.fertilizeFrequency);
+  return Math.round((next - startOfDay(new Date())) / (1000 * 60 * 60 * 24));
+};
+
+export const needsFertilizing = (plant) => {
+  const daysUntil = getDaysUntilNextFertilizing(plant);
   return daysUntil !== null && daysUntil <= 0;
 };
