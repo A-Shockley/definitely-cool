@@ -278,6 +278,29 @@ textarea {
   border-color: #48bb78;
 }
 
+.filter-buttons .group-toggle {
+  flex: 0 1 auto;
+  min-width: 110px;
+}
+
+/* Room grouping */
+.room-section {
+  margin-bottom: 25px;
+}
+
+.room-heading {
+  color: white;
+  font-size: 1.3rem;
+  margin-bottom: 12px;
+  text-shadow: 0 1px 3px rgba(0, 0, 0, 0.2);
+}
+
+.room-count {
+  font-size: 1rem;
+  font-weight: 500;
+  opacity: 0.85;
+}
+
 /* Plant Grid */
 .plant-grid {
   display: grid;

@@ -13,6 +13,7 @@ const emptyForm = {
   location: '',
   wateringFrequencySummer: '',
   wateringFrequencyWinter: '',
+  fertilizeFrequency: '',
   lightRequirement: '',
   soilType: '',
   notes: '',
@@ -44,6 +45,7 @@ function PlantForm({ plant, initialSpecies, onSave, onCancel }) {
         wateringFrequencySummer:
           plant.wateringFrequencySummer || plant.wateringFrequency || '',
         wateringFrequencyWinter: plant.wateringFrequencyWinter || '',
+        fertilizeFrequency: plant.fertilizeFrequency || '',
         lightRequirement: plant.lightRequirement || '',
         soilType: plant.soilType || '',
         notes: plant.notes || '',
@@ -113,6 +115,9 @@ function PlantForm({ plant, initialSpecies, onSave, onCancel }) {
       wateringFrequencyWinter: winter,
       // Keep the original single-frequency field in sync for compatibility
       wateringFrequency: summer,
+      fertilizeFrequency: formData.fertilizeFrequency
+        ? parseInt(formData.fertilizeFrequency)
+        : null,
     };
 
     onSave(plantData);
@@ -231,6 +236,23 @@ function PlantForm({ plant, initialSpecies, onSave, onCancel }) {
               />
               <small>Optional — Nov to Feb</small>
             </div>
+          </div>
+
+          <div className="form-group">
+            <label htmlFor="fertilizeFrequency">Fertilizing (days)</label>
+            <input
+              type="number"
+              id="fertilizeFrequency"
+              name="fertilizeFrequency"
+              value={formData.fertilizeFrequency}
+              onChange={handleChange}
+              placeholder="e.g., 30"
+              min="1"
+            />
+            <small>
+              Optional — many houseplants like feeding every 4–6 weeks in the
+              growing season
+            </small>
           </div>
 
           <div className="form-group">

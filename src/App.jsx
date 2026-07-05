@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import PlantCard from './components/PlantCard';
 import PlantForm from './components/PlantForm';
 import PlantLibrary from './components/PlantLibrary';
@@ -11,10 +11,15 @@ import {
   waterPlant,
   snoozePlant,
   removeWateringEntry,
+  fertilizePlant,
+  repotPlant,
+  archivePlant,
+  restorePlant,
   needsWatering
 } from './utils/plantStorage';
 import { deletePhotosForPlant } from './utils/photoStorage';
 import { shouldRemindBackup, dismissBackupReminder } from './utils/exportUtils';
+import { maybeNotifyDuePlants } from './utils/notifications';
 import './App.css';
 
 // If the chosen name is already taken, add a number: "Spider Plant" →
@@ -36,9 +41,16 @@ function App() {
   const [showBackupReminder, setShowBackupReminder] = useState(
     () => shouldRemindBackup(getPlants().length)
   );
-  const [filterView, setFilterView] = useState('all'); // all, needs-water, upcoming
+  const [filterView, setFilterView] = useState('all'); // all, needs-water, upcoming, archived
   const [roomFilter, setRoomFilter] = useState('all');
+  const [groupByRoom, setGroupByRoom] = useState(false);
   const [searchTerm, setSearchTerm] = useState('');
+
+  // If any plants are due when the app opens, show one notification per
+  // day (when the user has allowed notifications).
+  useEffect(() => {
+    maybeNotifyDuePlants(getPlants().filter((p) => !p.archived && needsWatering(p)).length);
+  }, []);
 
   const handleAddPlant = () => {
     setEditingPlant(null);
@@ -102,6 +114,26 @@ function App() {
     setPlants(getPlants());
   };
 
+  const handleFertilizePlant = (id) => {
+    fertilizePlant(id);
+    setPlants(getPlants());
+  };
+
+  const handleRepotPlant = (id) => {
+    repotPlant(id);
+    setPlants(getPlants());
+  };
+
+  const handleArchivePlant = (id) => {
+    archivePlant(id);
+    setPlants(getPlants());
+  };
+
+  const handleRestorePlant = (id) => {
+    restorePlant(id);
+    setPlants(getPlants());
+  };
+
   const handleDismissReminder = () => {
     dismissBackupReminder();
     setShowBackupReminder(false);
@@ -113,11 +145,14 @@ function App() {
     setFormSpecies(null);
   };
 
+  const activePlants = plants.filter((p) => !p.archived);
+  const archivedPlants = plants.filter((p) => p.archived);
+
   // Every room currently in use, for the room filter dropdown
-  const roomsInUse = [...new Set(plants.map((p) => p.location).filter(Boolean))].sort();
+  const roomsInUse = [...new Set(activePlants.map((p) => p.location).filter(Boolean))].sort();
 
   // Filter plants based on view, room, and search
-  const filteredPlants = plants.filter(plant => {
+  const filteredPlants = (filterView === 'archived' ? archivedPlants : activePlants).filter(plant => {
     // Room filter
     if (roomFilter !== 'all' && plant.location !== roomFilter) {
       return false;
@@ -140,13 +175,40 @@ function App() {
     if (filterView === 'upcoming') {
       return !needsWatering(plant);
     }
-    return true; // 'all'
+    return true; // 'all' or 'archived'
   });
 
+  // Room-by-room grouping for watering rounds
+  const groupedPlants = groupByRoom
+    ? [...new Set(filteredPlants.map((p) => p.location || 'No room set'))].map(
+        (room) => ({
+          room,
+          plants: filteredPlants.filter((p) => (p.location || 'No room set') === room),
+        })
+      )
+    : null;
+
   const plantStats = {
-    total: plants.length,
-    needsWater: plants.filter(needsWatering).length,
+    total: activePlants.length,
+    needsWater: activePlants.filter(needsWatering).length,
   };
+
+  const renderCard = (plant) => (
+    <PlantCard
+      key={plant.id}
+      plant={plant}
+      onWater={handleWaterPlant}
+      onWaterOn={handleWaterPlantOn}
+      onSnooze={handleSnoozePlant}
+      onRemoveWatering={handleRemoveWatering}
+      onFertilize={handleFertilizePlant}
+      onRepot={handleRepotPlant}
+      onArchive={handleArchivePlant}
+      onRestore={handleRestorePlant}
+      onEdit={handleEditPlant}
+      onDelete={handleDeletePlant}
+    />
+  );
 
   return (
     <div className="app">
@@ -268,11 +330,26 @@ function App() {
               >
                 Scheduled
               </button>
+              {archivedPlants.length > 0 && (
+                <button
+                  className={filterView === 'archived' ? 'active' : ''}
+                  onClick={() => setFilterView('archived')}
+                >
+                  🗄️ Archived ({archivedPlants.length})
+                </button>
+              )}
+              <button
+                className={`group-toggle ${groupByRoom ? 'active' : ''}`}
+                onClick={() => setGroupByRoom(!groupByRoom)}
+                title="Group the list by room for watering rounds"
+              >
+                🏠 By room
+              </button>
             </div>
           </div>
 
-          <main className="plant-grid">
-            {filteredPlants.length === 0 ? (
+          {filteredPlants.length === 0 ? (
+            <main className="plant-grid">
               <div className="empty-state">
                 {plants.length === 0 ? (
                   <>
@@ -289,21 +366,22 @@ function App() {
                   </>
                 )}
               </div>
-            ) : (
-              filteredPlants.map(plant => (
-                <PlantCard
-                  key={plant.id}
-                  plant={plant}
-                  onWater={handleWaterPlant}
-                  onWaterOn={handleWaterPlantOn}
-                  onSnooze={handleSnoozePlant}
-                  onRemoveWatering={handleRemoveWatering}
-                  onEdit={handleEditPlant}
-                  onDelete={handleDeletePlant}
-                />
-              ))
-            )}
-          </main>
+            </main>
+          ) : groupedPlants ? (
+            <main>
+              {groupedPlants.map(({ room, plants: roomPlants }) => (
+                <section key={room} className="room-section">
+                  <h2 className="room-heading">
+                    📍 {room}{' '}
+                    <span className="room-count">({roomPlants.length})</span>
+                  </h2>
+                  <div className="plant-grid">{roomPlants.map(renderCard)}</div>
+                </section>
+              ))}
+            </main>
+          ) : (
+            <main className="plant-grid">{filteredPlants.map(renderCard)}</main>
+          )}
         </>
       )}
 
